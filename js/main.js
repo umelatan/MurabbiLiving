@@ -1,4 +1,4 @@
-import { onAuthChange, logout } from './auth.js';
+import { onAuthChange, logout, redirectResultReady } from './auth.js';
 import { isFirebaseConfigured } from './firebase-config.js';
 import { renderLoginScreen } from './loginScreen.js';
 import { startRouter, navigate } from './router.js';
@@ -79,10 +79,14 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('sw.js')
-      .then((reg) => reg.update())
-      .catch((err) => console.error('SW registration failed', err));
+    // Wait for any pending Google-redirect sign-in to finish before even checking
+    // for an app update, so that check's reload can never cut the redirect off.
+    redirectResultReady.finally(() => {
+      navigator.serviceWorker
+        .register('sw.js')
+        .then((reg) => reg.update())
+        .catch((err) => console.error('SW registration failed', err));
+    });
   });
 }
 

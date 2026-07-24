@@ -53,12 +53,18 @@ function isAllowed(user) {
   return !!(user && user.email && ALLOWED_EMAILS.has(user.email.toLowerCase()));
 }
 
-if (isFirebaseConfigured) {
-  // Surfaces errors from the redirect-based sign-in (e.g. popup closed, network issues).
-  getRedirectResult(auth).catch((err) => {
-    lastAuthError = err.message || 'Could not sign in.';
-  });
+// Resolves once any pending Google-redirect sign-in has been fully processed.
+// main.js waits on this before letting the service worker reload the page, so an
+// in-flight redirect result can never get interrupted (and silently lost) by a
+// reload triggered by an unrelated app-update check landing at the same moment.
+export const redirectResultReady = isFirebaseConfigured
+  ? getRedirectResult(auth)
+      .catch((err) => {
+        lastAuthError = err.message || 'Could not sign in.';
+      })
+  : Promise.resolve();
 
+if (isFirebaseConfigured) {
   onAuthStateChanged(auth, async (user) => {
     if (user && !isAllowed(user)) {
       lastAuthError = `${user.email} isn't authorized to use this app.`;
