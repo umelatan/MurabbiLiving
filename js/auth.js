@@ -39,6 +39,7 @@ export function getLastAuthError() {
 
 export async function loginWithGoogle() {
   if (!isFirebaseConfigured) throw new Error('Firebase is not configured yet.');
+  lastAuthError = null; // clear any previous rejection message before a fresh attempt
   const provider = new GoogleAuthProvider();
   await signInWithRedirect(auth, provider);
 }
@@ -62,9 +63,10 @@ if (isFirebaseConfigured) {
     if (user && !isAllowed(user)) {
       lastAuthError = `${user.email} isn't authorized to use this app.`;
       await signOut(auth);
-      return; // signOut triggers this listener again with user = null
+      return; // signOut triggers this listener again with user = null; lastAuthError
+      // is deliberately left set so the login screen can display it on that next call.
     }
-    lastAuthError = null;
+    if (user) lastAuthError = null; // successful sign-in clears any prior error
     currentUser = user;
     listeners.forEach((cb) => cb(currentUser));
   });

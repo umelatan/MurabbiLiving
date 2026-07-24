@@ -1,6 +1,7 @@
 import { loginWithGoogle, getLastAuthError } from './auth.js';
 import { isFirebaseConfigured } from './firebase-config.js';
 import { showToast } from './lib/toast.js';
+import { escapeHtml } from './lib/utils.js';
 
 const GOOGLE_ICON = `<svg width="20" height="20" viewBox="0 0 48 48">
   <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
@@ -22,11 +23,14 @@ export function renderLoginScreen() {
     return;
   }
 
+  const err = getLastAuthError();
+
   el.innerHTML = `
     <div class="login-card card stack">
       <img src="assets/icons/icon-192.png" alt="Murabbi Living" class="login-logo" />
       <h1 class="text-center" style="margin-bottom:0;">Murabbi Living</h1>
       <p class="text-muted text-center" style="margin-top:0;">Book fair sales & cashier</p>
+      ${err ? `<div class="chip chip-error" style="white-space:normal;text-align:center;padding:10px 14px;">${escapeHtml(err)}</div>` : ''}
       <button id="google-signin-btn" class="btn btn-outline btn-block btn-lg" style="gap:10px;">
         ${GOOGLE_ICON}
         <span>Sign in with Google</span>
@@ -34,7 +38,6 @@ export function renderLoginScreen() {
       <p class="text-muted text-center" style="font-size:13px;">Access is limited to authorized accounts.</p>
     </div>`;
 
-  const err = getLastAuthError();
   if (err) showToast(err, 'error');
 
   document.getElementById('google-signin-btn').addEventListener('click', async () => {
