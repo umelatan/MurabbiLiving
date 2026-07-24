@@ -1,6 +1,6 @@
 import { firebaseConfig } from './firebase-keys.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import { getAuth, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -15,8 +15,9 @@ export let db = null;
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig);
+  // browserLocalPersistence is already the default — no setPersistence() call needed,
+  // and skipping it removes an unawaited async timing window before auth is used.
   auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence);
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   });

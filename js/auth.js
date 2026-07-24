@@ -2,8 +2,6 @@ import { auth, isFirebaseConfigured } from './firebase-config.js';
 import {
   onAuthStateChanged,
   signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider,
   signOut,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -16,15 +14,6 @@ const ALLOWED_EMAILS = new Set([
   'murabbi.books@gmail.com',
   'shaf.r210003@gmail.com',
 ]);
-
-// iPadOS Safari reports a desktop "Macintosh" user agent by default, so a real Mac
-// has to be told apart from an iPad by touch support instead (Macs report 0).
-function isMobileDevice() {
-  const ua = navigator.userAgent;
-  const isPhone = /Android|iPhone|iPod/i.test(ua);
-  const isIPad = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-  return isPhone || isIPad;
-}
 
 let currentUser = null;
 let lastAuthError = null;
@@ -47,24 +36,11 @@ export function getLastAuthError() {
   return lastAuthError;
 }
 
-// Popup and redirect each break in different places depending on platform: some
-// desktop browsers (confirmed: Firefox's storage partitioning) silently break
-// redirect's pending-state persistence across the trip to accounts.google.com, while
-// mobile browsers — especially iOS Safari and installed/home-screen PWAs — frequently
-// block or can't complete popup-based sign-in at all. Popup on desktop, redirect on
-// mobile is Firebase's own recommended split for exactly this reason.
 export async function loginWithGoogle() {
   if (!isFirebaseConfigured) throw new Error('Firebase is not configured yet.');
   lastAuthError = null; // clear any previous rejection message before a fresh attempt
   const provider = new GoogleAuthProvider();
-
-  if (isMobileDevice()) {
-    console.log('[auth] starting signInWithRedirect (mobile)');
-    await signInWithRedirect(auth, provider);
-    return;
-  }
-
-  console.log('[auth] starting signInWithPopup (desktop)');
+  console.log('[auth] starting signInWithPopup');
   try {
     const result = await signInWithPopup(auth, provider);
     console.log('[auth] signInWithPopup resolved:', result.user.email);
@@ -84,19 +60,9 @@ function isAllowed(user) {
   return !!(user && user.email && ALLOWED_EMAILS.has(user.email.toLowerCase()));
 }
 
-// Resolves once any pending Google-redirect sign-in (mobile path) has been fully
-// processed. main.js waits on this before letting the service worker reload the
-// page, so an in-flight redirect result can never get interrupted and silently lost.
-export const redirectResultReady = isFirebaseConfigured
-  ? getRedirectResult(auth)
-      .then((result) => {
-        console.log('[auth] getRedirectResult resolved:', result ? result.user?.email : '(no pending redirect)');
-      })
-      .catch((err) => {
-        console.log('[auth] getRedirectResult error:', err.code, err.message);
-        lastAuthError = err.message || 'Could not sign in.';
-      })
-  : Promise.resolve();
+// Kept so main.js's "wait before checking for an app update" logic still applies —
+// harmless no-op since sign-in no longer navigates the page away and back.
+export const redirectResultReady = Promise.resolve();
 
 if (isFirebaseConfigured) {
   onAuthStateChanged(auth, async (user) => {
