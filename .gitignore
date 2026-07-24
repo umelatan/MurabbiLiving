@@ -1,0 +1,8 @@
+.DS_Store
+
+# Source spreadsheets used to build data/seed-price-list.json — contain real cost
+# prices and stock counts, kept local rather than committed.
+*.xlsx
+
+# Design references used to derive the CSS design tokens — not part of the shipped app.
+stitch_prototype/

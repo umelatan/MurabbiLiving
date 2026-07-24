@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Murabbi Living — Book Fair POS</title>
+<meta name="description" content="Cashier, price list, sales log and profit dashboard for Murabbi Living book fairs." />
+<meta name="theme-color" content="#3e655f" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" />
+<link rel="icon" href="assets/icons/favicon-16.png" sizes="16x16" />
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- Auth gate: shown while logged out -->
+  <div id="login-screen" class="login-screen hidden"></div>
+
+  <!-- Main app chrome: shown while logged in -->
+  <div id="app-shell" class="hidden">
+    <header class="topbar">
+      <img src="assets/icons/icon-192.png" alt="" class="logo-mark" />
+      <span class="brand">Murabbi Living</span>
+      <button id="event-switcher-btn" class="event-switcher" type="button">
+        <span id="event-switcher-label">Select event</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <span class="spacer"></span>
+      <span id="offline-indicator" class="chip chip-error hidden" title="No connection — sales will sync when you're back online">Offline</span>
+      <button id="logout-btn" class="icon-btn" type="button" title="Log out" aria-label="Log out">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </header>
+
+    <div class="app-body">
+      <nav class="sidenav" id="sidenav"></nav>
+      <main id="view" class="content-max"></main>
+    </div>
+
+    <nav class="bottomnav" id="bottomnav"></nav>
+  </div>
+
+  <div id="toast-host"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
