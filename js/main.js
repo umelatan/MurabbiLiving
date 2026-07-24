@@ -69,8 +69,20 @@ window.addEventListener('offline', updateOfflineIndicator);
 updateOfflineIndicator();
 
 if ('serviceWorker' in navigator) {
+  // When a new deploy's service worker takes over, reload once so the tab actually
+  // picks up the new files instead of continuing to run stale cached JS/CSS.
+  let refreshedForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshedForUpdate) return;
+    refreshedForUpdate = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch((err) => console.error('SW registration failed', err));
+    navigator.serviceWorker
+      .register('sw.js')
+      .then((reg) => reg.update())
+      .catch((err) => console.error('SW registration failed', err));
   });
 }
 

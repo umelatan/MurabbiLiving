@@ -1,5 +1,5 @@
 // Bump this on every deploy so installed devices pick up the new app shell.
-const CACHE_NAME = 'murabbi-living-v1';
+const CACHE_NAME = 'murabbi-living-v2';
 
 const PRECACHE_URLS = [
   './',
