@@ -1,8 +1,7 @@
 import { auth, isFirebaseConfigured } from './firebase-config.js';
 import {
   onAuthStateChanged,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -37,12 +36,23 @@ export function getLastAuthError() {
   return lastAuthError;
 }
 
+// Popup keeps everything in the current tab/window (no top-level navigation), which
+// avoids a whole class of redirect-flow bugs where Firebase's pending-sign-in state
+// fails to persist across the trip to accounts.google.com and back — that failure
+// mode looks exactly like "nothing happens, no error, no user ever created".
 export async function loginWithGoogle() {
   if (!isFirebaseConfigured) throw new Error('Firebase is not configured yet.');
   lastAuthError = null; // clear any previous rejection message before a fresh attempt
   const provider = new GoogleAuthProvider();
-  console.log('[auth] starting signInWithRedirect');
-  await signInWithRedirect(auth, provider);
+  console.log('[auth] starting signInWithPopup');
+  try {
+    const result = await signInWithPopup(auth, provider);
+    console.log('[auth] signInWithPopup resolved:', result.user.email);
+  } catch (err) {
+    console.log('[auth] signInWithPopup error:', err.code, err.message);
+    lastAuthError = err.message || 'Could not sign in.';
+    throw err;
+  }
 }
 
 export async function logout() {
@@ -54,20 +64,9 @@ function isAllowed(user) {
   return !!(user && user.email && ALLOWED_EMAILS.has(user.email.toLowerCase()));
 }
 
-// Resolves once any pending Google-redirect sign-in has been fully processed.
-// main.js waits on this before letting the service worker reload the page, so an
-// in-flight redirect result can never get interrupted (and silently lost) by a
-// reload triggered by an unrelated app-update check landing at the same moment.
-export const redirectResultReady = isFirebaseConfigured
-  ? getRedirectResult(auth)
-      .then((result) => {
-        console.log('[auth] getRedirectResult resolved:', result ? result.user?.email : '(no pending redirect)');
-      })
-      .catch((err) => {
-        console.log('[auth] getRedirectResult error:', err.code, err.message);
-        lastAuthError = err.message || 'Could not sign in.';
-      })
-  : Promise.resolve();
+// Kept so main.js's "wait before checking for an app update" logic still applies —
+// harmless no-op now that sign-in no longer navigates the page away and back.
+export const redirectResultReady = Promise.resolve();
 
 if (isFirebaseConfigured) {
   onAuthStateChanged(auth, async (user) => {
