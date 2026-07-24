@@ -41,6 +41,7 @@ export async function loginWithGoogle() {
   if (!isFirebaseConfigured) throw new Error('Firebase is not configured yet.');
   lastAuthError = null; // clear any previous rejection message before a fresh attempt
   const provider = new GoogleAuthProvider();
+  console.log('[auth] starting signInWithRedirect');
   await signInWithRedirect(auth, provider);
 }
 
@@ -59,14 +60,20 @@ function isAllowed(user) {
 // reload triggered by an unrelated app-update check landing at the same moment.
 export const redirectResultReady = isFirebaseConfigured
   ? getRedirectResult(auth)
+      .then((result) => {
+        console.log('[auth] getRedirectResult resolved:', result ? result.user?.email : '(no pending redirect)');
+      })
       .catch((err) => {
+        console.log('[auth] getRedirectResult error:', err.code, err.message);
         lastAuthError = err.message || 'Could not sign in.';
       })
   : Promise.resolve();
 
 if (isFirebaseConfigured) {
   onAuthStateChanged(auth, async (user) => {
+    console.log('[auth] onAuthStateChanged fired, user:', user ? user.email : null);
     if (user && !isAllowed(user)) {
+      console.log('[auth] rejecting — not on the whitelist:', JSON.stringify(user.email));
       lastAuthError = `${user.email} isn't authorized to use this app.`;
       await signOut(auth);
       return; // signOut triggers this listener again with user = null; lastAuthError
@@ -74,6 +81,7 @@ if (isFirebaseConfigured) {
     }
     if (user) lastAuthError = null; // successful sign-in clears any prior error
     currentUser = user;
+    console.log('[auth] notifying listeners, currentUser:', currentUser ? currentUser.email : null);
     listeners.forEach((cb) => cb(currentUser));
   });
 }

@@ -28,6 +28,7 @@ function boot() {
   }
 
   onAuthChange((user) => {
+    console.log('[main] onAuthChange callback fired, user:', user ? user.email : null);
     if (user) {
       loginScreenEl.classList.add('hidden');
       appShellEl.classList.remove('hidden');
@@ -73,8 +74,10 @@ if ('serviceWorker' in navigator) {
   // picks up the new files instead of continuing to run stale cached JS/CSS.
   let refreshedForUpdate = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    console.log('[main] SW controllerchange fired, refreshedForUpdate:', refreshedForUpdate);
     if (refreshedForUpdate) return;
     refreshedForUpdate = true;
+    console.log('[main] reloading for new service worker version');
     window.location.reload();
   });
 
@@ -82,6 +85,7 @@ if ('serviceWorker' in navigator) {
     // Wait for any pending Google-redirect sign-in to finish before even checking
     // for an app update, so that check's reload can never cut the redirect off.
     redirectResultReady.finally(() => {
+      console.log('[main] redirectResultReady settled, registering SW');
       navigator.serviceWorker
         .register('sw.js')
         .then((reg) => reg.update())

@@ -24,6 +24,7 @@ export function renderLoginScreen() {
   }
 
   const err = getLastAuthError();
+  console.log('[loginScreen] rendering, lastAuthError:', err);
 
   el.innerHTML = `
     <div class="login-card card stack">
@@ -41,9 +42,11 @@ export function renderLoginScreen() {
   if (err) showToast(err, 'error');
 
   document.getElementById('google-signin-btn').addEventListener('click', async () => {
+    console.log('[loginScreen] Sign in with Google clicked');
     try {
       await loginWithGoogle();
     } catch (e) {
+      console.log('[loginScreen] loginWithGoogle threw:', e.code, e.message);
       showToast(e.message || 'Could not start sign-in', 'error');
     }
   });
