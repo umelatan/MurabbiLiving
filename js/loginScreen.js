@@ -1,6 +1,13 @@
-import { login } from './auth.js';
+import { loginWithGoogle, getLastAuthError } from './auth.js';
 import { isFirebaseConfigured } from './firebase-config.js';
 import { showToast } from './lib/toast.js';
+
+const GOOGLE_ICON = `<svg width="20" height="20" viewBox="0 0 48 48">
+  <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
+  <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.6 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.9 29.6 5 24 5c-7.7 0-14.4 4.4-17.7 10.7z"/>
+  <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.6C29.6 34.9 26.9 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.6 5.1C9.5 39.5 16.2 44 24 44z"/>
+  <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6C41.5 35.9 44 30.5 44 24c0-1.3-.1-2.7-.4-3.5z"/>
+</svg>`;
 
 export function renderLoginScreen() {
   const el = document.getElementById('login-screen');
@@ -20,42 +27,21 @@ export function renderLoginScreen() {
       <img src="assets/icons/icon-192.png" alt="Murabbi Living" class="login-logo" />
       <h1 class="text-center" style="margin-bottom:0;">Murabbi Living</h1>
       <p class="text-muted text-center" style="margin-top:0;">Book fair sales & cashier</p>
-      <form id="login-form" class="stack">
-        <div class="field">
-          <label class="label-sm" for="login-email">Email</label>
-          <input id="login-email" type="email" autocomplete="username" required />
-        </div>
-        <div class="field" style="margin-bottom:0;">
-          <label class="label-sm" for="login-password">Password</label>
-          <input id="login-password" type="password" autocomplete="current-password" required />
-        </div>
-        <button class="btn btn-primary btn-block btn-lg" type="submit">Log in</button>
-      </form>
+      <button id="google-signin-btn" class="btn btn-outline btn-block btn-lg" style="gap:10px;">
+        ${GOOGLE_ICON}
+        <span>Sign in with Google</span>
+      </button>
+      <p class="text-muted text-center" style="font-size:13px;">Access is limited to authorized accounts.</p>
     </div>`;
 
-  const form = document.getElementById('login-form');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Logging in…';
+  const err = getLastAuthError();
+  if (err) showToast(err, 'error');
+
+  document.getElementById('google-signin-btn').addEventListener('click', async () => {
     try {
-      await login(email, password);
-    } catch (err) {
-      showToast(friendlyAuthError(err), 'error');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Log in';
+      await loginWithGoogle();
+    } catch (e) {
+      showToast(e.message || 'Could not start sign-in', 'error');
     }
   });
-}
-
-function friendlyAuthError(err) {
-  const code = err && err.code;
-  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-    return 'Incorrect email or password.';
-  }
-  if (code === 'auth/too-many-requests') return 'Too many attempts — try again in a bit.';
-  return err.message || 'Could not log in.';
 }
