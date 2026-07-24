@@ -7,10 +7,14 @@ import {
   signOut,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 
-// Only these 2 Google accounts may use the app. Firestore rules enforce this too —
+// Only these Google accounts may use the app. Firestore rules enforce this too —
 // this client-side check is just so an unauthorized sign-in is rejected immediately
 // with a clear message, rather than silently failing on the first Firestore read.
-const ALLOWED_EMAILS = new Set(['nurnasuhaa@gmail.com', 'murabbi.books@gmail.com']);
+const ALLOWED_EMAILS = new Set([
+  'nurnasuhaa@gmail.com',
+  'murabbi.books@gmail.com',
+  'shaf.r210003@gmail.com',
+]);
 
 let currentUser = null;
 let lastAuthError = null;
