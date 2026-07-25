@@ -295,6 +295,7 @@ input::placeholder { color: var(--color-outline); }
 .segmented-btn {
   position: relative;
   z-index: 1;
+  flex: 1 1 0;
   border: none;
   background: transparent;
   padding: 8px 18px;
@@ -305,6 +306,7 @@ input::placeholder { color: var(--color-outline); }
   color: var(--color-on-surface-variant);
   cursor: pointer;
   white-space: nowrap;
+  text-align: center;
 }
 .segmented-btn.active { color: var(--color-primary); }
 .segmented-sm .segmented-btn { padding: 6px 14px; min-height: 32px; font-size: 13px; }
