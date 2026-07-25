@@ -14,7 +14,7 @@ import { formatMoney } from '../lib/discounts.js';
 import { escapeHtml } from '../lib/utils.js';
 
 export function render(container, { eventId }) {
-  let viewMode = 'customer'; // 'staff' | 'customer'
+  let viewMode = 'staff'; // 'staff' | 'customer'
   let items = [];
   let rules = [];
   let searchTerm = '';
@@ -24,8 +24,8 @@ export function render(container, { eventId }) {
       <div class="row-between">
         <h1>Price List</h1>
         <div class="row" style="gap:6px;">
-          <button class="btn btn-outline btn-sm mode-btn" data-mode="staff">Staff view</button>
-          <button class="btn btn-outline btn-sm mode-btn active" data-mode="customer">Customer view</button>
+          <button class="btn btn-outline btn-sm mode-btn active" data-mode="staff">Staff view</button>
+          <button class="btn btn-outline btn-sm mode-btn" data-mode="customer">Customer view</button>
         </div>
       </div>
       <div id="price-list-body"></div>
