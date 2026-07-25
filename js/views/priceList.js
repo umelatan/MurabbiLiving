@@ -15,6 +15,7 @@ import { escapeHtml } from '../lib/utils.js';
 
 export function render(container, { eventId }) {
   let viewMode = 'staff'; // 'staff' | 'customer'
+  let staffTab = 'books'; // 'books' | 'rules'
   let items = [];
   let rules = [];
   let searchTerm = '';
@@ -23,18 +24,21 @@ export function render(container, { eventId }) {
     <div class="content-max stack">
       <div class="row-between">
         <h1>Price List</h1>
-        <div class="row" style="gap:6px;">
-          <button class="btn btn-outline btn-sm mode-btn active" data-mode="staff">Staff view</button>
-          <button class="btn btn-outline btn-sm mode-btn" data-mode="customer">Customer view</button>
+        <div class="segmented" id="mode-toggle" data-active="staff">
+          <div class="segmented-thumb"></div>
+          <button class="segmented-btn active" data-mode="staff">Staff</button>
+          <button class="segmented-btn" data-mode="customer">Customer</button>
         </div>
       </div>
       <div id="price-list-body"></div>
     </div>`;
 
-  container.querySelectorAll('.mode-btn').forEach((btn) => {
+  const modeToggleEl = document.getElementById('mode-toggle');
+  modeToggleEl.querySelectorAll('.segmented-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       viewMode = btn.dataset.mode;
-      container.querySelectorAll('.mode-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      modeToggleEl.dataset.active = viewMode;
+      modeToggleEl.querySelectorAll('.segmented-btn').forEach((b) => b.classList.toggle('active', b === btn));
       renderBody();
     });
   });
@@ -59,7 +63,18 @@ export function render(container, { eventId }) {
 
   function staffTemplate() {
     return `
-      <div class="row-between" style="margin:12px 0;">
+      <div class="segmented segmented-sm" id="staff-tab-toggle" data-active="${staffTab}" style="margin:12px 0;">
+        <div class="segmented-thumb"></div>
+        <button class="segmented-btn ${staffTab === 'books' ? 'active' : ''}" data-tab="books">Books</button>
+        <button class="segmented-btn ${staffTab === 'rules' ? 'active' : ''}" data-tab="rules">Discount Rules${rules.length ? ` (${rules.length})` : ''}</button>
+      </div>
+      ${staffTab === 'books' ? booksTemplate() : rulesTemplate()}
+    `;
+  }
+
+  function booksTemplate() {
+    return `
+      <div class="row-between" style="margin-bottom:12px;">
         <input id="pl-search" type="text" placeholder="Search books…" style="max-width:280px;" value="${escapeHtml(searchTerm)}" />
         <button id="add-item-btn" class="btn btn-primary btn-sm">+ Add Book</button>
       </div>
@@ -92,8 +107,12 @@ export function render(container, { eventId }) {
           </tbody>
         </table>
       </div>
+    `;
+  }
 
-      <div class="row-between" style="margin:20px 0 12px;">
+  function rulesTemplate() {
+    return `
+      <div class="row-between" style="margin-bottom:12px;">
         <h2 style="margin:0;">Discount Rules</h2>
         <button id="add-rule-btn" class="btn btn-outline btn-sm">+ Add Rule</button>
       </div>
@@ -145,31 +164,42 @@ export function render(container, { eventId }) {
   }
 
   function attachStaffListeners() {
-    const searchEl = document.getElementById('pl-search');
-    searchEl.addEventListener('input', (e) => {
-      searchTerm = e.target.value;
-      renderBody();
-      document.getElementById('pl-search').focus();
-      const v = document.getElementById('pl-search');
-      v.selectionStart = v.selectionEnd = v.value.length;
+    const tabToggleEl = document.getElementById('staff-tab-toggle');
+    tabToggleEl.querySelectorAll('.segmented-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        staffTab = btn.dataset.tab;
+        renderBody();
+      });
     });
-    document.getElementById('add-item-btn').addEventListener('click', () => openItemModal());
-    document.querySelectorAll('.edit-item-btn').forEach((btn) =>
-      btn.addEventListener('click', () => openItemModal(items.find((i) => i.id === btn.dataset.id)))
-    );
-    document.querySelectorAll('.delete-item-btn').forEach((btn) =>
-      btn.addEventListener('click', () => confirmDeleteItem(btn.dataset.id))
-    );
-    document.getElementById('add-rule-btn').addEventListener('click', () => openRuleModal());
-    document.querySelectorAll('.edit-rule-btn').forEach((btn) =>
-      btn.addEventListener('click', () => openRuleModal(rules.find((r) => r.id === btn.dataset.id)))
-    );
-    document.querySelectorAll('.delete-rule-btn').forEach((btn) =>
-      btn.addEventListener('click', async () => {
-        await deleteDiscountRule(eventId, btn.dataset.id);
-        showToast('Rule removed');
-      })
-    );
+
+    if (staffTab === 'books') {
+      const searchEl = document.getElementById('pl-search');
+      searchEl.addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        renderBody();
+        document.getElementById('pl-search').focus();
+        const v = document.getElementById('pl-search');
+        v.selectionStart = v.selectionEnd = v.value.length;
+      });
+      document.getElementById('add-item-btn').addEventListener('click', () => openItemModal());
+      document.querySelectorAll('.edit-item-btn').forEach((btn) =>
+        btn.addEventListener('click', () => openItemModal(items.find((i) => i.id === btn.dataset.id)))
+      );
+      document.querySelectorAll('.delete-item-btn').forEach((btn) =>
+        btn.addEventListener('click', () => confirmDeleteItem(btn.dataset.id))
+      );
+    } else {
+      document.getElementById('add-rule-btn').addEventListener('click', () => openRuleModal());
+      document.querySelectorAll('.edit-rule-btn').forEach((btn) =>
+        btn.addEventListener('click', () => openRuleModal(rules.find((r) => r.id === btn.dataset.id)))
+      );
+      document.querySelectorAll('.delete-rule-btn').forEach((btn) =>
+        btn.addEventListener('click', async () => {
+          await deleteDiscountRule(eventId, btn.dataset.id);
+          showToast('Rule removed');
+        })
+      );
+    }
   }
 
   function openItemModal(item) {

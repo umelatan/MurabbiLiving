@@ -268,6 +268,47 @@ input::placeholder { color: var(--color-outline); }
 .chip-error { background: var(--color-error-container); color: var(--color-on-error-container); }
 .chip-outline { background: transparent; border: 1px solid var(--color-outline-variant); }
 
+/* ---- Segmented toggle (sliding pill, 2 segments) ---- */
+.segmented {
+  position: relative;
+  display: inline-flex;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-full);
+  padding: 3px;
+  gap: 2px;
+}
+.segmented-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  background: var(--color-surface-lowest);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-1);
+  transition: transform 0.2s ease;
+}
+.segmented[data-active="customer"] .segmented-thumb,
+.segmented[data-active="rules"] .segmented-thumb {
+  transform: translateX(100%);
+}
+.segmented-btn {
+  position: relative;
+  z-index: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  min-height: 38px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented-btn.active { color: var(--color-primary); }
+.segmented-sm .segmented-btn { padding: 6px 14px; min-height: 32px; font-size: 13px; }
+
 /* ---- App shell layout ---- */
 #app {
   height: 100dvh;
