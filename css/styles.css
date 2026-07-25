@@ -295,7 +295,7 @@ input::placeholder { color: var(--color-outline); }
 .segmented-btn {
   position: relative;
   z-index: 1;
-  flex: 1 1 0;
+  flex: 1 1 0%; /* the % matters: some Safari versions mistreat unitless "0" as "auto" */
   border: none;
   background: transparent;
   padding: 8px 18px;
