@@ -11,7 +11,7 @@ import {
 import { showToast } from '../lib/toast.js';
 import { openModal, closeModal } from '../lib/modal.js';
 import { formatMoney } from '../lib/discounts.js';
-import { escapeHtml } from '../lib/utils.js';
+import { escapeHtml, positionSegmentedThumb } from '../lib/utils.js';
 
 const NEW_CATEGORY_VALUE = '__new__';
 
@@ -76,9 +76,11 @@ export function render(container, { eventId }) {
       viewMode = btn.dataset.mode;
       modeToggleEl.dataset.active = viewMode;
       modeToggleEl.querySelectorAll('.segmented-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      positionSegmentedThumb(modeToggleEl);
       renderBody();
     });
   });
+  positionSegmentedThumb(modeToggleEl);
 
   const unsubItems = subscribeItems(eventId, (list) => {
     items = list;
@@ -208,6 +210,7 @@ export function render(container, { eventId }) {
         renderBody();
       });
     });
+    positionSegmentedThumb(tabToggleEl);
 
     if (staffTab === 'books') {
       const searchEl = document.getElementById('pl-search');
