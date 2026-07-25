@@ -13,6 +13,43 @@ import { openModal, closeModal } from '../lib/modal.js';
 import { formatMoney } from '../lib/discounts.js';
 import { escapeHtml } from '../lib/utils.js';
 
+const NEW_CATEGORY_VALUE = '__new__';
+
+// A <select> of existing categories plus an explicit "+ Add new category" option,
+// which reveals a text input. Deliberately not a <datalist> — datalist's "type
+// something not in the list" behavior is unreliable on iPad Safari, which made
+// adding a new category look impossible even though it technically worked.
+function categoryFieldHtml(fieldId, categories, currentValue) {
+  const isNew = !!currentValue && !categories.includes(currentValue);
+  const showNewInput = isNew || categories.length === 0;
+  const options = categories
+    .map((c) => `<option value="${escapeHtml(c)}" ${currentValue === c ? 'selected' : ''}>${escapeHtml(c)}</option>`)
+    .join('');
+  return `
+    <select id="${fieldId}-select">
+      ${options}
+      <option value="${NEW_CATEGORY_VALUE}" ${showNewInput ? 'selected' : ''}>+ Add new category…</option>
+    </select>
+    <input id="${fieldId}-new" type="text" placeholder="New category name" value="${escapeHtml(isNew ? currentValue : '')}" class="${showNewInput ? '' : 'hidden'}" style="margin-top:8px;" />
+  `;
+}
+
+function wireCategoryField(sheet, fieldId) {
+  const select = sheet.querySelector(`#${fieldId}-select`);
+  const newInput = sheet.querySelector(`#${fieldId}-new`);
+  select.addEventListener('change', () => {
+    const showNew = select.value === NEW_CATEGORY_VALUE;
+    newInput.classList.toggle('hidden', !showNew);
+    if (showNew) newInput.focus();
+  });
+}
+
+function getCategoryFieldValue(sheet, fieldId) {
+  const select = sheet.querySelector(`#${fieldId}-select`);
+  const newInput = sheet.querySelector(`#${fieldId}-new`);
+  return select.value === NEW_CATEGORY_VALUE ? newInput.value.trim() : select.value;
+}
+
 export function render(container, { eventId }) {
   let viewMode = 'staff'; // 'staff' | 'customer'
   let staffTab = 'books'; // 'books' | 'rules'
@@ -213,9 +250,8 @@ export function render(container, { eventId }) {
           <input id="it-name" type="text" required value="${escapeHtml(item?.name || '')}" />
         </div>
         <div class="field">
-          <label class="label-sm" for="it-category">Category</label>
-          <input id="it-category" list="category-options" required value="${escapeHtml(item?.category || '')}" />
-          <datalist id="category-options">${categories.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('')}</datalist>
+          <label class="label-sm" for="it-category-select">Category</label>
+          ${categoryFieldHtml('it-category', categories, item?.category)}
         </div>
         <div class="row" style="gap:12px;">
           <div class="field" style="flex:1;">
@@ -240,11 +276,17 @@ export function render(container, { eventId }) {
         <button class="btn btn-primary btn-block btn-lg" type="submit">${isEdit ? 'Save changes' : 'Add book'}</button>
       </form>
     `);
+    wireCategoryField(sheet, 'it-category');
     sheet.querySelector('#item-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const category = getCategoryFieldValue(sheet, 'it-category');
+      if (!category) {
+        showToast('Enter a name for the new category', 'error');
+        return;
+      }
       const payload = {
         name: document.getElementById('it-name').value.trim(),
-        category: document.getElementById('it-category').value.trim() || 'Uncategorized',
+        category,
         costPrice: Number(document.getElementById('it-cost').value) || 0,
         sellingPrice: Number(document.getElementById('it-sell').value) || 0,
         stockOnHand: Number(document.getElementById('it-stock').value) || 0,
@@ -309,9 +351,8 @@ export function render(container, { eventId }) {
       if (t === 'categoryQtyDiscount') {
         fieldsEl.innerHTML = `
           <div class="field">
-            <label class="label-sm" for="rl-category">Category</label>
-            <input id="rl-category" list="rl-category-options" required value="${escapeHtml(rule?.category || '')}" />
-            <datalist id="rl-category-options">${categories.map((c) => `<option value="${escapeHtml(c)}"></option>`).join('')}</datalist>
+            <label class="label-sm" for="rl-category-select">Category</label>
+            ${categoryFieldHtml('rl-category', categories, rule?.category)}
           </div>
           <div class="row" style="gap:12px;">
             <div class="field" style="flex:1;">
@@ -323,6 +364,7 @@ export function render(container, { eventId }) {
               <div class="input-prefix"><span>$</span><input id="rl-discount" type="number" min="0.01" step="0.01" required value="${rule?.discountAmount || ''}" /></div>
             </div>
           </div>`;
+        wireCategoryField(sheet, 'rl-category');
       } else if (t === 'itemTierPrice') {
         fieldsEl.innerHTML = `
           <div class="field">
@@ -364,7 +406,12 @@ export function render(container, { eventId }) {
       const label = document.getElementById('rl-label').value.trim();
       let payload = { type: t, label };
       if (t === 'categoryQtyDiscount') {
-        payload.category = document.getElementById('rl-category').value.trim();
+        const category = getCategoryFieldValue(sheet, 'rl-category');
+        if (!category) {
+          showToast('Enter a name for the new category', 'error');
+          return;
+        }
+        payload.category = category;
         payload.minQty = Number(document.getElementById('rl-minqty').value) || 2;
         payload.discountAmount = Number(document.getElementById('rl-discount').value) || 0;
       } else if (t === 'itemTierPrice') {
