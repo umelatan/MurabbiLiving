@@ -2,6 +2,7 @@ import { auth, isFirebaseConfigured } from './firebase-config.js';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -60,9 +61,22 @@ function isAllowed(user) {
   return !!(user && user.email && ALLOWED_EMAILS.has(user.email.toLowerCase()));
 }
 
-// Kept so main.js's "wait before checking for an app update" logic still applies —
-// harmless no-op since sign-in no longer navigates the page away and back.
-export const redirectResultReady = Promise.resolve();
+// Safety net: on some browsers (confirmed: iPad Safari) window.open() from
+// signInWithPopup silently navigates the *current* tab to Google instead of opening a
+// real popup — functionally a redirect, but signInWithPopup's own promise never
+// resolves because the page reloaded out from under it. Checking for a pending
+// redirect result on every load catches that case; it resolves to null harmlessly
+// everywhere popup behaves as an actual popup.
+export const redirectResultReady = isFirebaseConfigured
+  ? getRedirectResult(auth)
+      .then((result) => {
+        console.log('[auth] getRedirectResult resolved:', result ? result.user?.email : '(no pending redirect)');
+      })
+      .catch((err) => {
+        console.log('[auth] getRedirectResult error:', err.code, err.message);
+        lastAuthError = err.message || 'Could not sign in.';
+      })
+  : Promise.resolve();
 
 if (isFirebaseConfigured) {
   onAuthStateChanged(auth, async (user) => {
